@@ -1,0 +1,20 @@
+{
+  "manifest_version": 3,
+  "name": "File Manipulator",
+  "version": "1.0",
+  "description": "Chrome extension to intercept, modify and download files",
+  "permissions": [
+    "downloads",
+    "storage",
+    "activeTab"
+  ],
+  "host_permissions": [
+    "<all_urls>"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "action": {
+    "default_popup": "popup.html"
+  }
+} 
