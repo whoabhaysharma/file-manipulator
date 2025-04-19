@@ -1,3 +1,13 @@
 This is a test file.
 It will help us verify if the File Manipulator extension is working correctly.
-Download this file while the extension is enabled to see the modification in action. 
+Download this file while the extension is enabled to see the modification in action.
+
+Receipt #: 12345
+Customer: John Doe
+Date: 2023-05-15
+Items:
+- Product A x1 ($25.99)
+- Product B x2 ($19.99 each)
+Total: $65.97
+Consignment Info: CON-789-456
+Box ID: BOX-9876 
