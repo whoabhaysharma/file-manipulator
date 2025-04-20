@@ -97,20 +97,19 @@ async function processFileWithGemini(buffer, filename) {
       }
     ],
     generationConfig: {
-      responseMimeType: config.responseMimeType,
-      ...(config.responseMimeType === 'application/json' && {
-        responseSchema: {
-          type: 'OBJECT',
-          required: ['receipt_id', 'consignment_id', 'box_id'],
-          properties: {
-            receipt_id: { type: 'STRING' },
-            consignment_id: { type: 'STRING' },
-            box_id: { type: 'STRING' }
-          }
+      responseMimeType: 'application/json',
+      responseSchema: {
+        type: 'object',
+        required: ['receipt_id', 'consignment_id', 'box_id'],
+        properties: {
+          receipt_id: { type: 'string' },
+          consignment_id: { type: 'string' },
+          box_id: { type: 'string' }
         }
-      })
+      }
     }
   };
+  
 
   const resp = await fetch(url, {
     method: 'POST',
