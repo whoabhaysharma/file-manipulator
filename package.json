@@ -27,5 +27,9 @@
     "terser-webpack-plugin": "^5.3.10",
     "webpack": "^5.90.3",
     "webpack-cli": "^5.1.4"
+  },
+  "dependencies": {
+    "jspdf": "^2.5.1",
+    "jsbarcode": "^3.11.5"
   }
 } 

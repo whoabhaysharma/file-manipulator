@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "File Manipulator",
   "version": "1.0",
-  "description": "Chrome extension to intercept, modify and download files",
+  "description": "Chrome extension to extract data from PDFs and generate formatted PDFs with barcodes",
   "permissions": [
     "downloads",
     "storage",

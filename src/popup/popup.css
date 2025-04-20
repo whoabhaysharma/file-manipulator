@@ -78,10 +78,33 @@ input, textarea {
   border-radius: 4px;
 }
 
-.config-section {
+.config-section, .info-section {
   margin-top: 15px;
   border-top: 1px solid #ddd;
   padding-top: 15px;
+}
+
+.info-section {
+  font-size: 13px;
+}
+
+.info-section h3 {
+  margin-top: 0;
+  margin-bottom: 10px;
+}
+
+.info-section p {
+  margin-top: 0;
+  margin-bottom: 5px;
+}
+
+.info-section ol {
+  margin-top: 5px;
+  padding-left: 20px;
+}
+
+.info-section li {
+  margin-bottom: 5px;
 }
 
 .help-text {

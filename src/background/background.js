@@ -1,12 +1,15 @@
 // background.js — Chrome Extension Background Script
 // Last Updated: 2025-04-20
 
+// Import PDF generator
+import { createPdfWithoutBarcodes, pdfBlobToDataUrl } from '../utils/pdfGenerator';
+
 // --- DEFAULT CONFIG & STATE ---
 const DEFAULT_CONFIG = {
   apiKey: '',
   model: 'gemini-2.0-flash',
   filePatterns: ['*.pdf'],
-  responseMimeType: 'application/json',
+  responseMimeType: 'application/pdf',
   endpointBase: 'https://generativelanguage.googleapis.com'
 };
 
@@ -108,8 +111,7 @@ async function processFileWithGemini(buffer, filename) {
         }
       }
     }
-  };
-  
+  };  
 
   const resp = await fetch(url, {
     method: 'POST',
@@ -148,13 +150,18 @@ async function processAndDownload(item) {
     const data = await processFileWithGemini(buffer, origPath);
     debugLog('Extracted JSON', data);
 
-    // 4. Build new filename
+    // 4. Generate PDF with text-based barcode representations (ServiceWorker compatible)
+    const origFilename = origPath.split(/[/\\]/).pop();
+    debugLog('Creating PDF with data', { origFilename });
+    const pdfBlob = await createPdfWithoutBarcodes(data, origFilename);
+    const dataUrl = await pdfBlobToDataUrl(pdfBlob);
+
+    // 5. Build new filename
     const base = origPath.split(/[/\\]/).pop().replace(/\.[^/.]+$/, '');
     const folder = origPath.replace(/[^/\\]+$/, '');
-    const outName = `${folder}${base}_processed.json`;
+    const outName = `${folder}${base}_processed.pdf`;
 
-    // 5. Trigger download
-    const dataUrl = await textToDataUrl(data, 'application/json');
+    // 6. Trigger download
     const newId = await chrome.downloads.download({
       url: dataUrl,
       filename: outName,
@@ -162,7 +169,7 @@ async function processAndDownload(item) {
       conflictAction: 'uniquify'
     });
     initiatedDownloads.add(newId);
-    debugLog('Downloaded processed file', { newId, outName });
+    debugLog('Downloaded processed PDF', { newId, outName });
   } catch (err) {
     debugLog('processAndDownload error', err);
   }

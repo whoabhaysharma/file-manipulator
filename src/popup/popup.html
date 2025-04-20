@@ -23,7 +23,7 @@
     
     <div class="form-group">
       <label for="filePatterns">File Patterns</label>
-      <textarea id="filePatterns" rows="3" placeholder="*.txt, *.pdf, *.csv"></textarea>
+      <textarea id="filePatterns" rows="3" placeholder="*.pdf"></textarea>
       <div class="help-text">Comma-separated patterns for files to process</div>
     </div>
     
@@ -34,6 +34,17 @@
     </div>
     
     <button id="saveConfig">Save Configuration</button>
+  </div>
+  
+  <div class="info-section">
+    <h3>How It Works</h3>
+    <p>When enabled, this extension will:</p>
+    <ol>
+      <li>Intercept downloads matching your file patterns</li>
+      <li>Extract data (Receipt ID, Consignment ID, Box ID) using AI</li>
+      <li>Generate a PDF with the extracted data</li>
+      <li>Save the PDF automatically</li>
+    </ol>
   </div>
 </body>
 </html> 
