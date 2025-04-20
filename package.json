@@ -30,6 +30,7 @@
   },
   "dependencies": {
     "jspdf": "^2.5.1",
-    "jsbarcode": "^3.11.5"
+    "jsbarcode": "^3.11.5",
+    "html2canvas": "^1.4.1"
   }
 } 

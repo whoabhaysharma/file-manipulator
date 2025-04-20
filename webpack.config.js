@@ -12,11 +12,13 @@ module.exports = (env, argv) => {
     mode: isProduction ? 'production' : 'development',
     entry: {
       popup: './src/popup/popup.js',
-      background: './src/background/background.js'
+      background: './src/background/background.js',
+      contentScript: './src/contentScript.js'
     },
     output: {
       path: path.resolve(__dirname, 'dist'),
-      filename: '[name].js'
+      filename: '[name].js',
+      publicPath: '/'
     },
     devtool: isProduction ? false : 'inline-source-map',
     module: {

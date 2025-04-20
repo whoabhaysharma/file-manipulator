@@ -1,123 +1,96 @@
 # File Manipulator Extension
 
-A Chrome extension that intercepts file downloads matching specified patterns, processes them with Gemini AI, and provides the processed files to the user.
+A Chrome extension that extracts data from PDFs and generates formatted PDFs with barcodes.
 
 ## Project Structure
 
-```
-file-manipulator-extension/
-│
-├── src/                   # Source code
-│   ├── background/        # Background service worker
-│   │   └── background.js  # Background script
-│   │
-│   ├── popup/             # Popup UI
-│   │   ├── popup.html     # Popup HTML
-│   │   ├── popup.js       # Popup script
-│   │   └── popup.css      # Popup styles
-│   │
-│   ├── utils/             # Shared utility functions
-│   │   ├── api.js         # API interaction utilities
-│   │   ├── fileUtils.js   # File manipulation utilities
-│   │   └── storage.js     # Storage utilities
-│   │
-│   ├── manifest.json      # Extension manifest
-│   └── config.json        # Default configuration
-│
-├── dist/                  # Build output (generated)
-├── node_modules/          # Dependencies (generated)
-├── webpack.config.js      # Webpack configuration
-├── package.json           # Project metadata and dependencies
-└── README.md              # This file
-```
+This project consists of two main parts:
 
-## Development
+1. **Chrome Extension** - Frontend part that integrates with the browser
+2. **Backend Server** - Node.js server to handle barcode PDF generation
 
-### Prerequisites
+## Setting Up the Project
 
-- Node.js and npm
+### Backend Server
 
-### Setup
+1. Navigate to the backend directory:
+   ```
+   cd backend
+   ```
 
-1. Clone the repository
 2. Install dependencies:
    ```
    npm install
    ```
+   
+   Or use the install script:
+   ```
+   ./install.sh
+   ```
 
-### Build
+3. Start the server:
+   ```
+   npm start
+   ```
+   
+   For development with auto-restart:
+   ```
+   npm run dev
+   ```
+   
+   The server will run on http://localhost:3000
 
-To build the extension:
+### Chrome Extension
 
-```
-npm run build
-```
+1. Install dependencies:
+   ```
+   npm install
+   ```
 
-This will create a `dist` directory with the built extension.
+2. Build the extension:
+   ```
+   npm run build
+   ```
 
-### Development Mode
+3. Load the extension in Chrome:
+   - Open Chrome and go to `chrome://extensions/`
+   - Enable "Developer mode"
+   - Click "Load unpacked" and select the `dist` directory
 
-To run in development mode with automatic rebuilding:
+## Usage
 
-```
-npm run dev
-```
+1. Make sure the backend server is running
+2. Open a PDF in Chrome
+3. Click the extension icon
+4. The extension will extract data from the PDF and call the backend API to generate a barcode PDF
+5. The barcode PDF will be downloaded automatically
 
-## Installation
+## Architecture
 
-1. Build the extension
-2. Open Chrome and navigate to `chrome://extensions/`
-3. Enable "Developer mode"
-4. Click "Load unpacked" and select the `dist` directory
+- **Chrome Extension**:
+  - Content script extracts data from PDFs and sends it to the backend
+  - Background script handles extension lifecycle and user interactions
+  - Popup provides user interface
+  
+- **Backend Server**:
+  - Express.js server with REST API
+  - Handles barcode generation and PDF creation
+  - Returns PDF files to the extension for download
 
-## Configuration
+## API Endpoints
 
-1. After installing the extension, click on the extension icon to open the popup
-2. Enter your Gemini API key
-3. Configure file patterns to match (comma-separated glob patterns)
-4. Click "Save Configuration"
-5. Click "Enable File Manipulation" to activate the extension
+- **POST /api/generate-barcode** - Generate PDF with barcodes from the provided data
 
-## How It Works
+## Dependencies
 
-1. When the extension is enabled, it intercepts downloads matching the configured file patterns
-2. It processes the file content using the Gemini API
-3. It initiates a new download with the processed content
-4. The user can choose where to save the processed file
+### Backend
+- Express - Web server framework
+- PDFKit - PDF generation
+- JsBarcode - Barcode generation
+- xmldom - DOM implementation for SVG creation
+- svg-to-pdfkit - SVG to PDF conversion
 
-## Features
-
-- Intercept file downloads based on configurable filename patterns
-- Process file contents using Google's Gemini API
-- Generate structured JSON output from file content
-- Download the processed content as a text file
-- User-friendly configuration interface
-
-## API Integration
-
-This extension uses Google's Gemini API to extract structured data from downloaded files. The API response schema is configured to extract:
-
-- Receipt ID
-- Consignment ID
-- Box ID
-
-These fields are returned as JSON and saved as a text file.
-
-## Permissions
-
-The extension requires the following permissions:
-
-- `downloads`: To intercept and manage downloads
-- `storage`: To store your configuration
-- `activeTab`: To access the current tab
-- `host_permissions`: To make API requests to the Gemini API
-
-## Troubleshooting
-
-- Make sure you've entered a valid Gemini API key
-- Check that your file patterns match the files you're trying to process
-- If files aren't being processed, check the browser console for debugging information
-
-## License
-
-This project is licensed under the MIT License - see the LICENSE file for details. 
+### Extension
+- Webpack - Module bundler
+- Babel - JavaScript compiler
+- Chrome Extension API 

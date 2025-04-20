@@ -1,7 +1,7 @@
 // background.js — Chrome Extension Background Script
 // Last Updated: 2025-04-20
 
-// Import PDF generator
+// Import PDF generator for fallback
 import { createPdfWithoutBarcodes, pdfBlobToDataUrl } from '../utils/pdfGenerator';
 
 // --- DEFAULT CONFIG & STATE ---
@@ -132,6 +132,54 @@ async function processFileWithGemini(buffer, filename) {
   return JSON.parse(part);
 }
 
+/**
+ * Generate a PDF with barcodes using content script (DOM approach)
+ * @param {Object} data - Extracted data
+ * @param {string} filename - Original filename
+ * @returns {Promise<string>} - Data URL of PDF with barcodes
+ */
+async function generateBarcodesPDF(data, filename) {
+  try {
+    // Find an active tab to inject our content script
+    const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
+    
+    if (tabs.length === 0) {
+      throw new Error('No active tab found to generate barcodes');
+    }
+    
+    // Get the active tab
+    const tab = tabs[0];
+    
+    // Make sure the content script is injected
+    await chrome.scripting.executeScript({
+      target: { tabId: tab.id },
+      files: ['contentScript.js']
+    });
+    
+    // Send message to content script to generate barcodes
+    return new Promise((resolve, reject) => {
+      chrome.tabs.sendMessage(
+        tab.id,
+        { action: 'generateBarcodes', data, filename },
+        response => {
+          if (chrome.runtime.lastError) {
+            reject(new Error(`Content script error: ${chrome.runtime.lastError.message}`));
+          } else if (!response || !response.success) {
+            reject(new Error(response?.error || 'Failed to generate barcode PDF'));
+          } else {
+            resolve(response.dataUrl);
+          }
+        }
+      );
+    });
+  } catch (error) {
+    debugLog('Error generating barcodes using content script', error);
+    // Fall back to the non-barcode method if content script approach fails
+    const pdfBlob = await createPdfWithoutBarcodes(data, filename);
+    return pdfBlobToDataUrl(pdfBlob);
+  }
+}
+
 // --- CORE PROCESS & DOWNLOAD ---
 async function processAndDownload(item) {
   try {
@@ -150,16 +198,25 @@ async function processAndDownload(item) {
     const data = await processFileWithGemini(buffer, origPath);
     debugLog('Extracted JSON', data);
 
-    // 4. Generate PDF with text-based barcode representations (ServiceWorker compatible)
+    // 4. Generate PDF with real barcodes using content script
     const origFilename = origPath.split(/[/\\]/).pop();
-    debugLog('Creating PDF with data', { origFilename });
-    const pdfBlob = await createPdfWithoutBarcodes(data, origFilename);
-    const dataUrl = await pdfBlobToDataUrl(pdfBlob);
+    debugLog('Creating PDF with barcodes', { origFilename });
+    
+    // Try to use content script for barcode generation
+    let dataUrl;
+    try {
+      dataUrl = await generateBarcodesPDF(data, origFilename);
+    } catch (error) {
+      debugLog('Error with content script barcode generation', error);
+      // Fall back to the service worker compatible method
+      const pdfBlob = await createPdfWithoutBarcodes(data, origFilename);
+      dataUrl = await pdfBlobToDataUrl(pdfBlob);
+    }
 
     // 5. Build new filename
     const base = origPath.split(/[/\\]/).pop().replace(/\.[^/.]+$/, '');
     const folder = origPath.replace(/[^/\\]+$/, '');
-    const outName = `${folder}${base}_processed.pdf`;
+    const outName = `${folder}${base}_with_barcodes.pdf`;
 
     // 6. Trigger download
     const newId = await chrome.downloads.download({

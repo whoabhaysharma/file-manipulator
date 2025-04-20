@@ -4,9 +4,10 @@
   "version": "1.0",
   "description": "Chrome extension to extract data from PDFs and generate formatted PDFs with barcodes",
   "permissions": [
-    "downloads",
+    "activeTab",
     "storage",
-    "activeTab"
+    "downloads",
+    "http://localhost:3000/*"
   ],
   "host_permissions": [
     "<all_urls>",
@@ -18,6 +19,13 @@
   "action": {
     "default_popup": "popup.html"
   },
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["contentScript.js"],
+      "run_at": "document_idle"
+    }
+  ],
   "content_security_policy": {
     "extension_pages": "script-src 'self'; object-src 'self'"
   }
