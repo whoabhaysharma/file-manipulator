@@ -1,6 +1,89 @@
-# File Manipulator Chrome Extension
+# File Manipulator Extension
 
-A Chrome extension that processes downloaded files using the Gemini API and creates new files with the results.
+A Chrome extension that intercepts file downloads matching specified patterns, processes them with Gemini AI, and provides the processed files to the user.
+
+## Project Structure
+
+```
+file-manipulator-extension/
+│
+├── src/                   # Source code
+│   ├── background/        # Background service worker
+│   │   └── background.js  # Background script
+│   │
+│   ├── popup/             # Popup UI
+│   │   ├── popup.html     # Popup HTML
+│   │   ├── popup.js       # Popup script
+│   │   └── popup.css      # Popup styles
+│   │
+│   ├── utils/             # Shared utility functions
+│   │   ├── api.js         # API interaction utilities
+│   │   ├── fileUtils.js   # File manipulation utilities
+│   │   └── storage.js     # Storage utilities
+│   │
+│   ├── manifest.json      # Extension manifest
+│   └── config.json        # Default configuration
+│
+├── dist/                  # Build output (generated)
+├── node_modules/          # Dependencies (generated)
+├── webpack.config.js      # Webpack configuration
+├── package.json           # Project metadata and dependencies
+└── README.md              # This file
+```
+
+## Development
+
+### Prerequisites
+
+- Node.js and npm
+
+### Setup
+
+1. Clone the repository
+2. Install dependencies:
+   ```
+   npm install
+   ```
+
+### Build
+
+To build the extension:
+
+```
+npm run build
+```
+
+This will create a `dist` directory with the built extension.
+
+### Development Mode
+
+To run in development mode with automatic rebuilding:
+
+```
+npm run dev
+```
+
+## Installation
+
+1. Build the extension
+2. Open Chrome and navigate to `chrome://extensions/`
+3. Enable "Developer mode"
+4. Click "Load unpacked" and select the `dist` directory
+
+## Configuration
+
+1. After installing the extension, click on the extension icon to open the popup
+2. Enter your Gemini API key
+3. Configure file patterns to match (comma-separated glob patterns)
+4. Click "Save Configuration"
+5. Click "Enable File Manipulation" to activate the extension
+
+## How It Works
+
+1. When the extension is enabled, it intercepts downloads matching the configured file patterns
+2. It processes the file content using the Gemini API
+3. It initiates a new download with the processed content
+4. The user can choose where to save the processed file
 
 ## Features
 
@@ -9,30 +92,6 @@ A Chrome extension that processes downloaded files using the Gemini API and crea
 - Generate structured JSON output from file content
 - Download the processed content as a text file
 - User-friendly configuration interface
-
-## Setup
-
-### Installation
-
-1. Clone this repository or download the ZIP file
-2. Open Chrome and navigate to `chrome://extensions/`
-3. Enable Developer Mode (toggle in the top right)
-4. Click "Load unpacked" and select the extension directory
-
-### Configuration
-
-1. Click on the extension icon in your toolbar to open the popup
-2. Enter your Gemini API key in the configuration section
-3. Customize file patterns to match the files you want to process
-4. Click "Save Configuration" to store your settings
-5. Toggle "Enable File Manipulation" to activate the extension
-
-## How It Works
-
-1. When you download a file that matches your configured patterns, the extension will allow the original download to complete
-2. The extension will then read the file content and send it to the Gemini API for processing
-3. The API will analyze the content and extract structured data (receipt ID, consignment ID, box ID)
-4. The extension will create a new text file with the JSON result and download it automatically
 
 ## API Integration
 

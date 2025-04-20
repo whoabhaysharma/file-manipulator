@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>File Manipulator</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body>
+  <h2>File Manipulator</h2>
+  <div id="status" class="status inactive">Extension is ready</div>
+  <div id="errorMessage" class="error-message"></div>
+  <button id="toggleButton">Enable File Manipulation</button>
+  
+  <div class="config-section">
+    <h3>Configuration</h3>
+    
+    <div class="form-group">
+      <label for="apiKey">Gemini API Key</label>
+      <input type="text" id="apiKey" placeholder="Enter your Gemini API key">
+      <div class="help-text">Required for processing files with Gemini AI</div>
+      <div class="help-text"><a href="https://aistudio.google.com/app/apikey" target="_blank">Get an API key from Google AI Studio</a></div>
+    </div>
+    
+    <div class="form-group">
+      <label for="filePatterns">File Patterns</label>
+      <textarea id="filePatterns" rows="3" placeholder="*.txt, *.pdf, *.csv"></textarea>
+      <div class="help-text">Comma-separated patterns for files to process</div>
+    </div>
+    
+    <div class="form-group checkbox">
+      <input type="checkbox" id="autoSave" checked>
+      <label for="autoSave">Auto-save processed files</label>
+      <div class="help-text">When checked, processed files are saved automatically without asking for location</div>
+    </div>
+    
+    <button id="saveConfig">Save Configuration</button>
+  </div>
+</body>
+</html> 

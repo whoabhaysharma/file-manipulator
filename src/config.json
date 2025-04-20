@@ -1,0 +1,7 @@
+{
+  "apiKey": "AIzaSyCQLyuYI0gTkV8w-b4_wv-qdwbLweOAwsI",
+  "model": "gemini-2.0-flash",
+  "filePatterns": ["*.txt", "*.pdf", "*.csv"],
+  "responseMimeType": "text/plain",
+  "autoSave": true
+} 
