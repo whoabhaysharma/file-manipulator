@@ -6,8 +6,7 @@
   "permissions": [
     "activeTab",
     "storage",
-    "downloads",
-    "http://localhost:3000/*"
+    "downloads"
   ],
   "host_permissions": [
     "<all_urls>",

@@ -133,48 +133,46 @@ async function processFileWithGemini(buffer, filename) {
 }
 
 /**
- * Generate a PDF with barcodes using content script (DOM approach)
- * @param {Object} data - Extracted data
+ * Generate a PDF with barcodes using the backend API
+ * @param {Object} data - Extracted data (receipt_id, consignment_id, box_id)
  * @param {string} filename - Original filename
  * @returns {Promise<string>} - Data URL of PDF with barcodes
  */
 async function generateBarcodesPDF(data, filename) {
   try {
-    // Find an active tab to inject our content script
-    const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
+    debugLog('Calling backend API for barcode generation', { data, filename });
     
-    if (tabs.length === 0) {
-      throw new Error('No active tab found to generate barcodes');
+    // API endpoint URL
+    const API_URL = 'http://localhost:3000/api/generate-barcode';
+    
+    // Call the API
+    const response = await fetch(API_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ data, filename })
+    });
+    
+    // Check if request was successful
+    if (!response.ok) {
+      // Try to parse error response
+      try {
+        const errorData = await response.json();
+        throw new Error(errorData.error || `Server responded with status: ${response.status}`);
+      } catch (e) {
+        throw new Error(`Server responded with status: ${response.status}`);
+      }
     }
     
-    // Get the active tab
-    const tab = tabs[0];
+    // Get PDF as blob
+    const pdfBlob = await response.blob();
     
-    // Make sure the content script is injected
-    await chrome.scripting.executeScript({
-      target: { tabId: tab.id },
-      files: ['contentScript.js']
-    });
-    
-    // Send message to content script to generate barcodes
-    return new Promise((resolve, reject) => {
-      chrome.tabs.sendMessage(
-        tab.id,
-        { action: 'generateBarcodes', data, filename },
-        response => {
-          if (chrome.runtime.lastError) {
-            reject(new Error(`Content script error: ${chrome.runtime.lastError.message}`));
-          } else if (!response || !response.success) {
-            reject(new Error(response?.error || 'Failed to generate barcode PDF'));
-          } else {
-            resolve(response.dataUrl);
-          }
-        }
-      );
-    });
+    // Convert blob to data URL
+    return await pdfBlobToDataUrl(pdfBlob);
   } catch (error) {
-    debugLog('Error generating barcodes using content script', error);
-    // Fall back to the non-barcode method if content script approach fails
+    debugLog('Error generating barcodes with backend API', error);
+    // Fall back to the non-barcode method
     const pdfBlob = await createPdfWithoutBarcodes(data, filename);
     return pdfBlobToDataUrl(pdfBlob);
   }
@@ -254,19 +252,40 @@ chrome.downloads.onDeterminingFilename.addListener((item, suggest) => {
 });
 
 // --- MESSAGES FOR TOGGLE & CONFIG ---
-chrome.runtime.onMessage.addListener((msg, _, send) => {
+chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
   if (msg.action === 'toggleState') {
     isEnabled = Boolean(msg.state);
     chrome.storage.local.set({ isEnabled });
     debugLog('Toggled state', { isEnabled });
-    send({ success: true, isEnabled });
-  } else if (msg.action === 'updateConfig') {
+    sendResponse({ success: true, isEnabled });
+    return true;
+  } 
+  
+  if (msg.action === 'updateConfig') {
     config = { ...config, ...msg.config };
     chrome.storage.local.set({ config });
     debugLog('Updated config', config);
-    send({ success: true });
+    sendResponse({ success: true });
+    return true;
   }
-  return true;
+  
+  if (msg.action === 'processFile') {
+    handleFileProcessing(msg.fileData, msg.fileName)
+      .then(result => sendResponse(result))
+      .catch(error => sendResponse({ success: false, error: error.toString() }));
+    return true; // Indicates we will respond asynchronously
+  }
+  
+  if (msg.action === 'downloadPDF') {
+    chrome.downloads.download({
+      url: msg.dataUrl,
+      filename: `${msg.filename}_barcodes.pdf`,
+      saveAs: true
+    }, (downloadId) => {
+      sendResponse({ success: true, downloadId });
+    });
+    return true; // Indicates we will respond asynchronously
+  }
 });
 
 // --- BOOTSTRAP ---
@@ -275,3 +294,93 @@ chrome.runtime.onMessage.addListener((msg, _, send) => {
   await getEnabledState();
   debugLog('Background script ready', { isEnabled, config });
 })();
+
+// Listen for extension installation or update
+chrome.runtime.onInstalled.addListener(() => {
+  console.log('Extension installed/updated');
+  initializeStorageDefaults();
+});
+
+// Initialize default storage values
+async function initializeStorageDefaults() {
+  const defaults = {
+    enabled: false,
+    apiKey: '',
+    filePatterns: '*.pdf',
+    lastProcessedFile: null
+  };
+  
+  // Get current storage data
+  const data = await chrome.storage.local.get(Object.keys(defaults));
+  
+  // Set defaults for missing values
+  const newData = { ...defaults, ...data };
+  await chrome.storage.local.set(newData);
+}
+
+// Listen for extension button click
+chrome.action.onClicked.addListener(async (tab) => {
+  // Open the popup (if one is configured in manifest)
+});
+
+/**
+ * Process a file with Gemini API and generate barcodes
+ * @param {string} fileData - Base64 encoded file data
+ * @param {string} fileName - File name
+ * @returns {Promise<Object>} - Processing result
+ */
+async function handleFileProcessing(fileData, fileName) {
+  try {
+    debugLog(`Processing file: ${fileName}`);
+    
+    // Get API key from storage
+    const { apiKey } = await chrome.storage.local.get('apiKey');
+    
+    if (!apiKey) {
+      throw new Error('API key not configured. Please set it in the extension options.');
+    }
+    
+    // Extract data using Gemini API
+    const extractedData = await extractDataWithGemini(fileData, apiKey);
+    
+    if (!extractedData || !extractedData.receipt_id || !extractedData.consignment_id || !extractedData.box_id) {
+      throw new Error('Could not extract required data from the file. Make sure the file contains the necessary information.');
+    }
+    
+    debugLog('Extracted data:', extractedData);
+    
+    // Store last processed file info
+    await chrome.storage.local.set({ 
+      lastProcessedFile: { 
+        name: fileName,
+        data: extractedData,
+        timestamp: new Date().toISOString()
+      }
+    });
+    
+    // Generate barcode PDF directly using backend API
+    debugLog('Generating barcode PDF with backend API');
+    const baseFilename = fileName.replace(/\.[^/.]+$/, ''); // Remove file extension
+    const pdfDataUrl = await generateBarcodesPDF(extractedData, baseFilename);
+    
+    // Start download
+    const downloadId = await chrome.downloads.download({
+      url: pdfDataUrl,
+      filename: `${baseFilename}_barcodes.pdf`,
+      saveAs: true
+    });
+    
+    return {
+      success: true,
+      data: extractedData,
+      downloadInfo: { downloadId }
+    };
+    
+  } catch (error) {
+    debugLog('Error processing file:', error);
+    return {
+      success: false,
+      error: error.toString()
+    };
+  }
+}
